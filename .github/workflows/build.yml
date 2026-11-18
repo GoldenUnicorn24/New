@@ -1,0 +1,48 @@
+name: APK bauen
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.9"
+
+      - name: APK bauen
+        run: gradle :app:assembleRelease --no-daemon --stacktrace
+
+      - name: APK umbenennen
+        run: |
+          mkdir -p out
+          cp app/build/outputs/apk/release/app-release.apk out/Kronenkrieg.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Kronenkrieg-APK
+          path: out/Kronenkrieg.apk
+
+      - name: Als Release veröffentlichen
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v0.1.${{ github.run_number }}
+          name: Kronenkrieg 0.1.${{ github.run_number }}
+          body: |
+            Automatisch gebaute Testversion von Kronenkrieg.
+            Lade **Kronenkrieg.apk** auf dein Handy und installiere sie (Installation aus unbekannten Quellen erlauben).
+          files: out/Kronenkrieg.apk
+          make_latest: true
